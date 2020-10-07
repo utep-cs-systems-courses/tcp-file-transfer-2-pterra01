@@ -46,37 +46,41 @@ while True:
     filename = input(str("Enter the file name: "))
     # fileName = "testfile.txt"
     filename.strip()
+
+    if filename == "exit":
+        sys.exit(0)
     #break
-    if not filename:
-        continue
-
-    elif os.path.exists("sentFiles/" + filename):
-
-        s.sendall(filename.encode()) # send file name
-        file = open("sentFiles/" + filename, "rb")
-
-        s.sendall(str(os.stat("sentFiles/" + filename).st_size).encode()) # send size
-
-        while True:
-
-            data = file.read(1024)
-            s.sendall(data)
-            if not data:
-                break
-        file.close()
-
-        status = int(s.recv(1024).decode())
-        #print(status)
-
-        if status:
-            print("File %s received by the server" % filename)
-            sys.exit(0)
-
-        else:
-            print("File %s was not received by the server" % filename)
-            sys.exit(1)
     else:
-        print("File %s not found" % filename)
+        if not filename:
+            continue
+
+        elif os.path.exists("sentFiles/" + filename):
+
+            s.sendall(filename.encode()) # send file name
+            file = open("sentFiles/" + filename, "rb")
+
+            s.sendall(str(os.stat("sentFiles/" + filename).st_size).encode()) # send size
+
+            while True:
+
+                data = file.read(1024)
+                s.sendall(data)
+                if not data:
+                    break
+            file.close()
+
+            status = int(s.recv(1024).decode())
+            #print(status)
+
+            if status:
+                print("File %s received by the server" % filename)
+                sys.exit(0)
+
+            else:
+                print("File %s was not received by the server" % filename)
+                sys.exit(1)
+        else:
+            print("File %s not found" % filename)
 
 # fileContents = file.read() save contents in file
 
