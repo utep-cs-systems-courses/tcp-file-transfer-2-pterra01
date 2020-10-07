@@ -5,8 +5,8 @@ import socket, sys, re, os
 
 sys.path.append("../lib")       # for params
 import params
-sys.path.append("../framed-echo")
-from framedSock import framedSend, framedReceive
+#sys.path.append("../framed-echo")
+#from framedSock import framedSend, framedReceive
 
 
 switchesVarDefaults = (
@@ -15,22 +15,12 @@ switchesVarDefaults = (
     (('-?', '--usage'), "usage", False), # boolean (set if present)
     )
 
-while True:
-    try:
-        filename = input(str("Enter the file name: "))
-        # fileName = "testfile.txt"
-        file = open(filename, 'r') #open file
-        break
-    except FileNotFoundError:
-        print("File does not exist, try again")
-
 paramMap = params.parseParams(switchesVarDefaults)
 
 server, usage, debug  = paramMap["server"], paramMap["usage"], paramMap["debug"]
 
 if usage:
     params.usage()
-
 
 try:
     serverHost, serverPort = re.split(":", server)
@@ -46,12 +36,48 @@ addrPort = (serverHost, serverPort)
 s = socket.socket(addrFamily, socktype)
 
 if s is None:
-    print('could not open socket')
+    print('Could not open socket')
     sys.exit(1)
 
 s.connect(addrPort)
 
-fileContents = file.read() # save contents in file
+while True:
 
-framedSend(s, fileContents.encode(), debug)
-print("Received!")
+    filename = input(str("Enter the file name: "))
+    # fileName = "testfile.txt"
+    filename.strip()
+    #break
+    if not filename:
+        continue
+
+    elif os.path.exists("sentFiles/" + filename):
+
+        s.sendall(filename.encode()) # send file name
+        file = open("sentFiles/" + filename, "rb")
+
+        s.sendall(str(os.stat("sentFiles/" + filename).st_size).encode()) # send size
+
+        while True:
+
+            data = file.read(1024)
+            s.sendall(data)
+            if not data:
+                break
+        file.close()
+
+        status = int(s.recv(1024).decode())
+        #print(status)
+
+        if status:
+            print("File %s received by the server" % filename)
+            sys.exit(0)
+
+        else:
+            print("File %s was not received by the server" % filename)
+            sys.exit(1)
+    else:
+        print("File %s not found" % filename)
+
+# fileContents = file.read() save contents in file
+
+# framedSend(s, fileContents.encode(), debug)
