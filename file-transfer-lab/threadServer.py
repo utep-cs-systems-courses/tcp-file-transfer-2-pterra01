@@ -23,10 +23,30 @@ lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 bindAddr = ("127.0.0.1", listenPort)
 lsock.bind(bindAddr)
 lsock.listen(5)
-print("listening on:", bindAddr)
+print("Listening on:", bindAddr)
 
-from threading import Thread
+from threading import Thread, Lock
 from encapFramedSock import EncapFramedSock
+global flock
+
+used_files = []
+
+flock = Lock()
+print(used_files)
+
+def lock_start(filename):
+    global flock
+    flock.acquire()
+    if filename in used_files:
+        print("File is currently being used...")
+        flock.release()
+        sys.exit(1)
+    else:
+        used_files.append(filename)
+        flock.release()
+
+def lock_end(filename):
+    used_files.remove(filename)
 
 class Server(Thread):
     def __init__(self, sockAddr):
@@ -48,10 +68,12 @@ class Server(Thread):
                 else:
                     self.fsock.send(b"False", debug)
                     payload = self.fsock.receive(debug)
+                    lock_start(filename)
                     outfile = open(sentfile,"wb")
                     outfile.write(filename)
                     outfile.write(payload)
                     self.fsock.send(b"wrote new file",debug)
+                    lock_end(filename)
                     outfile.close()
             except:
                 print("Connection lost")
