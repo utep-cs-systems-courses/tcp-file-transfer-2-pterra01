@@ -24,6 +24,7 @@ bindAddr = ("127.0.0.1", listenPort)
 lsock.bind(bindAddr)
 lsock.listen(5)
 print("Listening on:", bindAddr)
+os.chdir("./receivedFilesThread")
 
 from threading import Thread, Lock
 from encapFramedSock import EncapFramedSock
